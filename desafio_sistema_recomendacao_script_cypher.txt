@@ -1,0 +1,77 @@
+Importar o dataset para criação da base.
+
+CALL apoc.load.csv("kagglehub.dataset_download("undefinenull/million-song-dataset-spotify-lastfm") YIELD map AS row
+MERGE (a:Artista {nome: row.nome})
+SET a.genero = row.genero;
+
+_________xxxx________________________________
+
+Criando a modelagem dos dados
+
+// Constraints
+CREATE CONSTRAINT IF NOT EXISTS ON (u:Usuario) ASSERT u.email IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS ON (a:Artista) ASSERT a.nome IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS ON (m:Musica) ASSERT m.titulo IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS ON (g:Genero) ASSERT g.nome IS UNIQUE;
+
+// Gêneros
+UNWIND ["Rock", "Pop", "Jazz", "Hip-Hop"] AS nomeGenero
+CREATE (:Genero {nome: nomeGenero});
+
+// Artistas
+UNWIND [
+  {nome: "Queen", genero: "Rock"},
+  {nome: "Adele", genero: "Pop"},
+  {nome: "Miles Davis", genero: "Jazz"},
+  {nome: "Kendrick Lamar", genero: "Hip-Hop"},
+  {nome: "Coldplay", genero: "Pop"}
+] AS artista
+MERGE (a:Artista {nome: artista.nome})
+MERGE (g:Genero {nome: artista.genero})
+MERGE (a)-[:PERTENCE_A]->(g);
+
+// Músicas
+UNWIND [
+  {titulo: "Bohemian Rhapsody", duracao: 354, artista: "Queen", genero: "Rock"},
+  {titulo: "Hello", duracao: 295, artista: "Adele", genero: "Pop"},
+  {titulo: "So What", duracao: 540, artista: "Miles Davis", genero: "Jazz"},
+  {titulo: "Alright", duracao: 230, artista: "Kendrick Lamar", genero: "Hip-Hop"},
+  {titulo: "Fix You", duracao: 310, artista: "Coldplay", genero: "Pop"},
+  {titulo: "Under Pressure", duracao: 248, artista: "Queen", genero: "Rock"},
+  {titulo: "Skyfall", duracao: 280, artista: "Adele", genero: "Pop"},
+  {titulo: "God is Fair", duracao: 400, artista: "Kendrick Lamar", genero: "Hip-Hop"}
+] AS musica
+MERGE (m:Musica {titulo: musica.titulo})
+SET m.duracao = musica.duracao
+MERGE (a:Artista {nome: musica.artista})
+MERGE (g:Genero {nome: musica.genero})
+MERGE (a)-[:CANTA]->(m)
+MERGE (m)-[:PERTENCE_A]->(g);
+
+// Usuários
+UNWIND [
+  {nome: "João Silva", email: "joao@email.com", idade: 30},
+  {nome: "Maria Santos", email: "maria@email.com", idade: 25},
+  {nome: "Pedro Costa", email: "pedro@email.com", idade: 28}
+] AS usuario
+CREATE (u:Usuario {
+  nome: usuario.nome,
+  email: usuario.email,
+  idade: usuario.idade
+});
+
+// Interações
+MATCH (u:Usuario {email: "joao@email.com"}), (m:Musica {titulo: "Bohemian Rhapsody"})
+MERGE (u)-[:OUVIU {vezes: 15, ultimaVez: date()}]->(m)
+MERGE (u)-[:CURTIU]->(m);
+
+MATCH (u:Usuario {email: "joao@email.com"}), (a:Artista {nome: "Queen"})
+MERGE (u)-[:SEGUE]->(a);
+
+MATCH (u:Usuario {email: "maria@email.com"}), (m:Musica {titulo: "Hello"})
+MERGE (u)-[:OUVIU {vezes: 10, ultimaVez: date()}]->(m)
+MERGE (u)-[:CURTIU]->(m);
+
+MATCH (u:Usuario {email: "pedro@email.com"}), (a:Artista {nome: "Kendrick Lamar"})
+MERGE (u)-[:SEGUE]->(a);
+
