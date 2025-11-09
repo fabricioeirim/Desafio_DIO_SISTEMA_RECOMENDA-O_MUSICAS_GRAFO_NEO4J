@@ -20,3 +20,5 @@ Relacionamentos (Edges):
 (:Artista)-[:CANTA]->(:Musica)
 
 (:Musica)-[:PERTENCE_A]->(:Genero)
+
+<img width="1285" height="877" alt="image" src="https://github.com/user-attachments/assets/93f864c7-b9d5-468f-bdd9-45e7b23ffdf9" />
